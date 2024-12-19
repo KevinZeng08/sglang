@@ -55,8 +55,12 @@ class SchedulePolicy:
             for r in waiting_queue:
                 # NOTE: the prefix_indices must always be aligned with last_node
                 r.prefix_indices, r.last_node = self.tree_cache.match_prefix(
-                    rid=r.rid, key=r.adjust_max_prefix_ids(), load_cache=True
+                    rid=r.rid, key=r.adjust_max_prefix_ids()
                 )
+                # to prevent evicting nodes referenced by other requests in waiting queue
+                self.tree_cache.inc_lock_ref(r.last_node)
+            for r in waiting_queue:
+                self.tree_cache.dec_lock_ref(r.last_node)
 
             prefix_computed = True
 
